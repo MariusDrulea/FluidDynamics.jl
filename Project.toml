@@ -1,0 +1,4 @@
+name = "FluidDynamics"
+uuid = "a7f8a741-7003-4d70-8a3b-e00a13880969"
+authors = ["Bogdan Morosanu <bogdan.moro.mail@gmail.com>"]
+version = "0.1.0"
