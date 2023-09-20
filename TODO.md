@@ -3,3 +3,9 @@
 3. Simple diffusion on top
 4. Fluid constrains (no dispersion over vector field)
 5. Add inputs, forces, etc
+
+
+- autoformat code: Moro
+- code coverage: Marius
+- generate docs: Marius
+- 
