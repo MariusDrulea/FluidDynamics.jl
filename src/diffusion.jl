@@ -1,57 +1,24 @@
 module Diffusion
 
-export diffusion!, diffusion_step, Cell, randCell, diffusion_kernel
-
-#      c
-#      
-# c    c'   c
-#      
-#      c
-#
-# sum(c) = constant (cantitatea de lichid nu creste sau scade)
-#
-# c(t, x) - c(t', x) = sum(flow(c(t, x), c(t, y))
-#
-# k   : 0.25  0.5  0.25
-# c(0): 0     1    2     3
-#         ->
-# flow(c(0, 0), c(0, 1)) = c(0,0) * k(0) - c(0,1) * k(2)
-#
-# sum(flow(c(0, 0), c(0, k))) = 
-#
-# sum(k) == 1
-# 
-# c(t+1, ...) = c + conv(c(t, ...), k)
-
-# conv
-# k
-# 0.33 0.33 0.33
-#
-# data                             t
-# 0    0    1    0                 |
-# 0    0.33 0.33 0.33              V
-# 1/9  2/9  3/9  2/9   1/9      
-# 0    0    1    
-# 
-
-# conv with adding back padding 
-# k
-# 0.33 0.33 0.33
-#
-# data
-# 0    0    1    0
-# 0    0.33 0.66 x
-# 1/9  2/9  6/9  xH, W, D = 8, 8, 8
-# 0    0    0    x   
+    export diffusion!, diffusion_step, Cell, randCell, diffusion_kernel
 
     using StaticArrays
     using NNlib
-    using Flux
+    import Base:+,*
+    
 
     struct Cell
         density::Float64
         velocity::SVector{3, Float64}
+
+        Cell(density, velocity=SVector{3, Float64}(0, 0, 0)) = new(density, velocity)
+        
     end
+
+    Cell(f::Float64) = f
+    a::Cell + b::Cell = Cell(a.density + b.density, a.velocity + b.velocity)
+    a::Cell * f::Float64 = Cell(a.density * f, a.velocity * f)
+    f::Float64 * a::Cell = a * f
 
     Matrix3 = Array{Cell, 3} # this is a typedef
     
@@ -61,12 +28,12 @@ export diffusion!, diffusion_step, Cell, randCell, diffusion_kernel
     volume = [randCell() for _ in 1:H, _ in 1:W, _ in 1:D]
 
     function diffusion_kernel()
-        k = ones(3, 3, 3)
+        k = ones(3, 3, 3, 1)
         return k ./ length(k)
     end
 
     function diffusion_step(volume_in, volume_out)
-        k = diffusion_kernel()
+        k = diffusion_kernel()        
         volume_out = conv(NNlib.pad_repeat(volume_in, (1, 1, 1, 1, 1, 1)), k)
         return volume_out
     end
