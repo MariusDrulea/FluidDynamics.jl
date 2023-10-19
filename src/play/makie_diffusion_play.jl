@@ -1,5 +1,5 @@
 using GLMakie
-using FluidDynamics
+# using FluidDynamics
 
 N = 100
 v = zeros(N, N, N, 1, 1)
@@ -15,7 +15,8 @@ volume_tmp = similar(volume)
 volumes = (volume, volume_tmp)
 cnt = 1
 while cnt <= 10000
-    v_ = diffusion_step(volumes[1+(cnt+1)%2], volumes[1+cnt%2])
+    # v_ = diffusion_step(volumes[1+(cnt+1)%2], volumes[1+cnt%2])
+    v_ = rand(size(v))
     cnt+=1
 
     # update the plot
