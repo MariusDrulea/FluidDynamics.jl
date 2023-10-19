@@ -1,6 +1,6 @@
 module FluidDynamics
 
-export Diffusion
+# export Diffusion
 
 include("diffusion.jl")
 

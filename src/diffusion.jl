@@ -1,6 +1,6 @@
-module Diffusion
+# module Diffusion
 
-    export diffusion!, diffusion_step, Cell, randCell, diffusion_kernel
+export diffusion!, diffusion_step, Cell, randCell, diffusion_kernel, density
 
     using StaticArrays
     using NNlib
@@ -12,8 +12,9 @@ module Diffusion
         velocity::SVector{3, Float64}
 
         Cell(density, velocity=SVector{3, Float64}(0, 0, 0)) = new(density, velocity)
-        
     end
+
+    density(c::Cell) = c.density
 
     Cell(f::Float64) = f
     a::Cell + b::Cell = Cell(a.density + b.density, a.velocity + b.velocity)
@@ -25,16 +26,17 @@ module Diffusion
     randCell() = Cell(rand(), SA[rand(), rand(), rand()])
     randCell()
 
-    volume = [randCell() for _ in 1:H, _ in 1:W, _ in 1:D]
-
     function diffusion_kernel()
-        k = ones(3, 3, 3, 1)
+        k = ones(3, 3, 3, 1, 1)
         return k ./ length(k)
     end
 
+    # (W, H, Cin, N) input #TODO: clarify this for NNlib
+    # (w, h, Cin, Cout, N)
     function diffusion_step(volume_in, volume_out)
-        k = diffusion_kernel()        
-        volume_out = conv(NNlib.pad_repeat(volume_in, (1, 1, 1, 1, 1, 1)), k)
+        k = diffusion_kernel() 
+        vol_pad = NNlib.pad_repeat(volume_in, (1, 1, 1, 1, 1, 1))   
+        volume_out .= conv(vol_pad, k)
         return volume_out
     end
 
@@ -44,7 +46,7 @@ module Diffusion
         
         cnt = 1
         while cnt <= max_steps
-            diffusion_step(volumes[cnt%2], volumes[(cnt+1)%2])
+            diffusion_step(volumes[1+(cnt+1)%2], volumes[1+cnt%2])
             cnt+=1
         end
         
@@ -53,4 +55,4 @@ module Diffusion
         return volume
     end
 
-end
+# end
