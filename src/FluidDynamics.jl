@@ -1,5 +1,7 @@
 module FluidDynamics
 
-greet() = print("Hello World!")
+export Diffusion
+
+include("diffusion.jl")
 
 end # module FluidDynamics

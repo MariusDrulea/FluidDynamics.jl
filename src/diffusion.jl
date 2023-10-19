@@ -1,5 +1,6 @@
 module Diffusion
 
+export diffusion!, diffusion_step, Cell, randCell, diffusion_kernel
 
 #      c
 #      
@@ -40,7 +41,7 @@ module Diffusion
 # data
 # 0    0    1    0
 # 0    0.33 0.66 x
-# 1/9  2/9  6/9  x
+# 1/9  2/9  6/9  xH, W, D = 8, 8, 8
 # 0    0    0    x   
 
     using StaticArrays
@@ -51,8 +52,6 @@ module Diffusion
         density::Float64
         velocity::SVector{3, Float64}
     end
-
-    H, W, D = 8, 8, 8
 
     Matrix3 = Array{Cell, 3} # this is a typedef
     
