@@ -4,24 +4,35 @@ export diffusion!, diffusion_step, Cell, randCell, diffusion_kernel, density
 
     using StaticArrays
     using NNlib
-    import Base:+,*
-    
+    import Base
+
+    Velocity = SVector{3, Float64}
 
     struct Cell
         density::Float64
-        velocity::SVector{3, Float64}
+        velocity::Velocity
 
-        Cell(density, velocity=SVector{3, Float64}(0, 0, 0)) = new(density, velocity)
+        Cell(density, velocity=Velocity(0, 0, 0)) = new(density, velocity)
     end
 
-    density(c::Cell) = c.density
+    struct Volume <: AbstractArray{Cell, 3}
+        densities::Array{Float64, 3}
+        velocities::Array{Velocity, 3}
 
-    Cell(f::Float64) = f
-    a::Cell + b::Cell = Cell(a.density + b.density, a.velocity + b.velocity)
-    a::Cell * f::Float64 = Cell(a.density * f, a.velocity * f)
-    f::Float64 * a::Cell = a * f
+        Volume(w, h, d) = new(zeros(Float64, w, h, d), zeros(Velocity, w, h, d))
+    end
 
-    Matrix3 = Array{Cell, 3} # this is a typedef
+    function Base.getindex(v::Volume, i...)
+        return Cell(v.densities[i...], v.velocities[i...])
+    end
+
+    function Base.setindex!(v::Volume, c::Cell, i...)
+        v.densities[i...] = c.density
+        v.velocities[i...] = c.velocity
+    end
+
+    Base.size(v::Volume) = size(v.densities)
+
     
     randCell() = Cell(rand(), SA[rand(), rand(), rand()])
     randCell()
