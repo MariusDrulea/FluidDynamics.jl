@@ -1,6 +1,6 @@
 # module Diffusion
 
-export diffusion!, diffusion_step, Cell, randCell, diffusion_kernel, density
+export diffusion!, diffusion_step, Cell, Velocity, Volume, randCell, diffusion_kernel, density
 
     using StaticArrays
     using NNlib
@@ -35,7 +35,6 @@ export diffusion!, diffusion_step, Cell, randCell, diffusion_kernel, density
 
     
     randCell() = Cell(rand(), SA[rand(), rand(), rand()])
-    randCell()
 
     function diffusion_kernel()
         k = ones(3, 3, 3, 1, 1)
