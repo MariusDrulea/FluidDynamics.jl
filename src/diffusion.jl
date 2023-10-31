@@ -1,74 +1,52 @@
-module Diffusion
+# module Diffusion
 
-
-#      c
-#      
-# c    c'   c
-#      
-#      c
-#
-# sum(c) = constant (cantitatea de lichid nu creste sau scade)
-#
-# c(t, x) - c(t', x) = sum(flow(c(t, x), c(t, y))
-#
-# k   : 0.25  0.5  0.25
-# c(0): 0     1    2     3
-#         ->
-# flow(c(0, 0), c(0, 1)) = c(0,0) * k(0) - c(0,1) * k(2)
-#
-# sum(flow(c(0, 0), c(0, k))) = 
-#
-# sum(k) == 1
-# 
-# c(t+1, ...) = c + conv(c(t, ...), k)
-
-# conv
-# k
-# 0.33 0.33 0.33
-#
-# data                             t
-# 0    0    1    0                 |
-# 0    0.33 0.33 0.33              V
-# 1/9  2/9  3/9  2/9   1/9      
-# 0    0    1    
-# 
-
-# conv with adding back padding 
-# k
-# 0.33 0.33 0.33
-#
-# data
-# 0    0    1    0
-# 0    0.33 0.66 x
-# 1/9  2/9  6/9  x
-# 0    0    0    x   
+export diffusion!, diffusion_step, Cell, Velocity, Volume, randCell, diffusion_kernel, density
 
     using StaticArrays
     using NNlib
-    using Flux
+    import Base
+
+    Velocity = SVector{3, Float64}
 
     struct Cell
         density::Float64
-        velocity::SVector{3, Float64}
+        velocity::Velocity
+
+        Cell(density, velocity=Velocity(0, 0, 0)) = new(density, velocity)
     end
 
-    H, W, D = 8, 8, 8
+    struct Volume <: AbstractArray{Cell, 3}
+        densities::Array{Float64, 3}
+        velocities::Array{Velocity, 3}
 
-    Matrix3 = Array{Cell, 3} # this is a typedef
+        Volume(w, h, d) = new(zeros(Float64, w, h, d), zeros(Velocity, w, h, d))
+    end
+
+    function Base.getindex(v::Volume, i...)
+        return Cell(v.densities[i...], v.velocities[i...])
+    end
+
+    function Base.setindex!(v::Volume, c::Cell, i...)
+        v.densities[i...] = c.density
+        v.velocities[i...] = c.velocity
+    end
+
+    Base.size(v::Volume) = size(v.densities)
+
     
     randCell() = Cell(rand(), SA[rand(), rand(), rand()])
-    randCell()
-
-    volume = [randCell() for _ in 1:H, _ in 1:W, _ in 1:D]
 
     function diffusion_kernel()
-        k = ones(3, 3, 3)
+        k = ones(3, 3, 3, 1, 1)
         return k ./ length(k)
     end
 
+    # (W, H, Cin, N) input #TODO: clarify this for NNlib
+    # (w, h, Cin, Cout, N)
     function diffusion_step(volume_in, volume_out)
-        k = diffusion_kernel()
-        volume_out = conv(NNlib.pad_repeat(volume_in, (1, 1, 1, 1, 1, 1)), k)
+        k = diffusion_kernel() 
+        vol_pad = NNlib.pad_repeat(volume_in, (1, 1, 1, 1, 1, 1))   
+        volume_out .= conv(vol_pad, k)
         return volume_out
     end
 
@@ -78,7 +56,7 @@ module Diffusion
         
         cnt = 1
         while cnt <= max_steps
-            diffusion_step(volumes[cnt%2], volumes[(cnt+1)%2])
+            diffusion_step(volumes[1+(cnt+1)%2], volumes[1+cnt%2])
             cnt+=1
         end
         
@@ -87,4 +65,4 @@ module Diffusion
         return volume
     end
 
-end
+# end
